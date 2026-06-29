@@ -37,6 +37,12 @@
 #define RGB_TRIGGER_ON_KEYDOWN
 #define LEADER_TIMEOUT 1500 // Increased from 350 to 1.5 seconds so you have plenty of time!
 
+// --- RGB CORE FEATURES ---
+#define RGB_MATRIX_INDICATORS_ADVANCED
+#define RGB_MATRIX_FRAMEBUFFER_EFFECTS
+#define RGB_MATRIX_KEYPRESSES
+#define RGB_MATRIX_KEYREACTIVE_ENABLED
+
 // --- RGB TWEAKS ---
 // Typing Heatmap (Makes it fade slower, tweaked to 35ms for balance)
 #define RGB_MATRIX_TYPING_HEATMAP_DECREASE_DELAY_MS 35
