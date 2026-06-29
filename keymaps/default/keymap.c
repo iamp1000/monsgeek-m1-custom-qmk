@@ -282,6 +282,84 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
                 rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
             }
         }
+        else if (effect == RGB_MATRIX_SOLID_REACTIVE_NEXUS) {
+            // OVERWRITTEN WITH: Supernova
+            uint8_t count = g_last_hit_tracker.count;
+            for (uint8_t i = led_min; i < led_max; i++) {
+                HSV hsv = { 20, 255, 0 }; // Orange base
+                uint8_t val = 0;
+                for (uint8_t j = 0; j < count; j++) {
+                    int16_t dx = g_led_config.point[i].x - g_last_hit_tracker.x[j];
+                    int16_t dy = g_led_config.point[i].y - g_last_hit_tracker.y[j];
+                    uint8_t dist = sqrt16(dx * dx + dy * dy); 
+                    
+                    // Starburst shape: horizontal, vertical, and diagonal lines
+                    if (abs(dx) <= 6 || abs(dy) <= 6 || abs(abs(dx) - abs(dy)) <= 6) {
+                        uint16_t tick = scale16by8(g_last_hit_tracker.tick[j], qadd8(speed, 1));
+                        uint16_t time = tick * 3;
+                        uint16_t effect_time = time - dist;
+                        if (effect_time < 255 && time >= dist) {
+                            uint8_t intensity = 255 - effect_time;
+                            val = qadd8(val, intensity);
+                            if (intensity > 180) {
+                                hsv.h = 40; // Yellow-hot core
+                            } else if (intensity < 80) {
+                                hsv.h = 190; // Deep purple ember fade
+                            }
+                        }
+                    }
+                }
+                hsv.v = scale8(val, rgb_matrix_config.hsv.v);
+                RGB rgb = hsv_to_rgb(hsv);
+                rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
+            }
+        }
+        else if (effect == RGB_MATRIX_HUE_BREATHING) {
+            // OVERWRITTEN WITH: Cyberpunk Pulse
+            uint8_t time_offset = (timer * speed) / 100;
+            uint8_t phase = time_offset % 255;
+            uint8_t val = 0;
+            
+            // Double heartbeat rhythm
+            if (phase < 60) {
+                val = scale8(sin8(phase * 4), 255); // First beat
+            } else if (phase > 80 && phase < 140) {
+                val = scale8(sin8((phase - 80) * 4), 200); // Second beat
+            } else {
+                val = 20; // Dim background glow
+            }
+            
+            // Alternate hue between Neon Pink (210) and Electric Cyan (130) on every heartbeat
+            uint8_t cycle = (time_offset / 255);
+            uint8_t hue = (cycle % 2 == 0) ? 210 : 130;
+            
+            for (uint8_t i = led_min; i < led_max; i++) {
+                HSV hsv = { hue, 255, scale8(val, rgb_matrix_config.hsv.v) };
+                RGB rgb = hsv_to_rgb(hsv);
+                rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
+            }
+        }
+        else if (effect == RGB_MATRIX_PIXEL_RAIN) {
+            // OVERWRITTEN WITH: Blood Rain
+            for (uint8_t i = led_min; i < led_max; i++) {
+                uint8_t time_offset = (timer / 15) - (g_led_config.point[i].y * 2);
+                uint8_t col_hash = (g_led_config.point[i].x * 17) % 255;
+                uint8_t phase = time_offset + col_hash;
+                
+                uint8_t val = 0;
+                if (phase > 200) {
+                    // Bright tip of the rain drop
+                    val = scale8((phase - 200) * 4, 255); 
+                } else {
+                    // Fading red trail
+                    val = scale8(phase, 60); 
+                }
+                
+                HSV hsv = { 0, 255, scale8(val, rgb_matrix_config.hsv.v) }; // Crimson Red
+                RGB rgb = hsv_to_rgb(hsv);
+                rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
+            }
+        }
     }
     return false; // let default indicators run over top of our effects
 }
