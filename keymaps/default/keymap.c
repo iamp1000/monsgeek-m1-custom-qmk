@@ -15,6 +15,7 @@
  */
 
 #include QMK_KEYBOARD_H
+#include "lib/lib8tion/lib8tion.h"
 #include "rgb_matrix.h"
 
 enum __layers {
@@ -269,7 +270,7 @@ enum {
     MORE_TAPS
 };
 
-uint8_t cur_dance(qk_tap_dance_state_t *state) {
+uint8_t cur_dance(tap_dance_state_t *state) {
     if (state->count == 1) {
         if (state->interrupted || !state->pressed) return SINGLE_TAP;
         else return SINGLE_HOLD;
@@ -290,7 +291,7 @@ static tap lshift_tap_state = {
     .state = 0
 };
 
-void lshift_finished(qk_tap_dance_state_t *state, void *user_data) {
+void lshift_finished(tap_dance_state_t *state, void *user_data) {
     lshift_tap_state.state = cur_dance(state);
     switch (lshift_tap_state.state) {
         case SINGLE_TAP: 
@@ -308,7 +309,7 @@ void lshift_finished(qk_tap_dance_state_t *state, void *user_data) {
     }
 }
 
-void lshift_reset(qk_tap_dance_state_t *state, void *user_data) {
+void lshift_reset(tap_dance_state_t *state, void *user_data) {
     if (lshift_tap_state.state == SINGLE_HOLD || lshift_tap_state.state == DOUBLE_HOLD) {
         unregister_code(KC_LSFT);
     }
@@ -320,7 +321,7 @@ static tap rshift_tap_state = {
     .state = 0
 };
 
-void rshift_finished(qk_tap_dance_state_t *state, void *user_data) {
+void rshift_finished(tap_dance_state_t *state, void *user_data) {
     rshift_tap_state.state = cur_dance(state);
     switch (rshift_tap_state.state) {
         case SINGLE_TAP: 
@@ -338,14 +339,14 @@ void rshift_finished(qk_tap_dance_state_t *state, void *user_data) {
     }
 }
 
-void rshift_reset(qk_tap_dance_state_t *state, void *user_data) {
+void rshift_reset(tap_dance_state_t *state, void *user_data) {
     if (rshift_tap_state.state == SINGLE_HOLD || rshift_tap_state.state == DOUBLE_HOLD) {
         unregister_code(KC_RSFT);
     }
     rshift_tap_state.state = 0;
 }
 
-qk_tap_dance_action_t tap_dance_actions[] = {
+tap_dance_action_t tap_dance_actions[] = {
     [0] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, lshift_finished, lshift_reset),
     [1] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, rshift_finished, rshift_reset)
 };
