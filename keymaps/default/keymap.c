@@ -251,6 +251,37 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
                 rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
             }
         }
+        else if (effect == RGB_MATRIX_SOLID_REACTIVE_CROSS) {
+            // OVERWRITTEN WITH: Neon Laser
+            uint8_t count = g_last_hit_tracker.count;
+            for (uint8_t i = led_min; i < led_max; i++) {
+                HSV hsv = { 130, 255, 0 }; // Cyan base
+                uint8_t val = 0;
+                for (uint8_t j = 0; j < count; j++) {
+                    int16_t dx = g_led_config.point[i].x - g_last_hit_tracker.x[j];
+                    int16_t dy = g_led_config.point[i].y - g_last_hit_tracker.y[j];
+                    
+                    // Only light up the exact row (horizontal laser)
+                    if (abs(dy) <= 6) {
+                        uint16_t tick = scale16by8(g_last_hit_tracker.tick[j], qadd8(speed, 1));
+                        uint16_t time = tick * 4; // fast laser speed
+                        uint16_t dist = abs(dx); 
+                        
+                        uint16_t effect_time = time - dist;
+                        if (effect_time < 255 && time >= dist) {
+                            uint8_t intensity = 255 - effect_time;
+                            val = qadd8(val, intensity);
+                            if (intensity > 150) {
+                                hsv.h = 220; // Core of the laser burns pink
+                            }
+                        }
+                    }
+                }
+                hsv.v = scale8(val, rgb_matrix_config.hsv.v);
+                RGB rgb = hsv_to_rgb(hsv);
+                rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
+            }
+        }
     }
     return false; // let default indicators run over top of our effects
 }
