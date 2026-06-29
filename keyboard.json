@@ -21,7 +21,9 @@
         "extrakey": true,
         "nkro": true,
         "encoder": true,
-        "rgb_matrix": true
+        "rgb_matrix": true,
+        "tap_dance": true,
+        "combo": true
     },
     "qmk": {
         "locking": {

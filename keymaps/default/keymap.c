@@ -26,6 +26,26 @@ enum __layers {
     MAC_FN
 };
 
+enum custom_keycodes {
+    PARENS = SAFE_RANGE
+};
+
+const uint16_t PROGMEM both_shifts_combo[] = {TD(0), TD(1), COMBO_END};
+
+combo_t key_combos[] = {
+    COMBO(both_shifts_combo, PARENS)
+};
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    if (record->event.pressed) {
+        if (keycode == PARENS) {
+            SEND_STRING("()" SS_TAP(X_LEFT));
+            return false;
+        }
+    }
+    return true;
+}
+
 #define KC_TASK LGUI(KC_TAB)
 #define KC_FLXP LGUI(KC_E)
 
@@ -274,8 +294,7 @@ void lshift_finished(qk_tap_dance_state_t *state, void *user_data) {
     lshift_tap_state.state = cur_dance(state);
     switch (lshift_tap_state.state) {
         case SINGLE_TAP: 
-            register_code(KC_LBRC); 
-            unregister_code(KC_LBRC); 
+            SEND_STRING("[]" SS_TAP(X_LEFT));
             break;
         case SINGLE_HOLD: 
             register_code(KC_LSFT); 
@@ -305,8 +324,7 @@ void rshift_finished(qk_tap_dance_state_t *state, void *user_data) {
     rshift_tap_state.state = cur_dance(state);
     switch (rshift_tap_state.state) {
         case SINGLE_TAP: 
-            register_code16(KC_LCBR); // {
-            unregister_code16(KC_LCBR); 
+            SEND_STRING("{}" SS_TAP(X_LEFT));
             break;
         case SINGLE_HOLD: 
             register_code(KC_RSFT); 
