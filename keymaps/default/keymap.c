@@ -96,7 +96,7 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
 void leader_end_user(void) {
     if (leader_sequence_two_keys(KC_G, KC_A)) {
         // git add .
-        SEND_STRING("git add .\n");
+        SEND_STRING("git add ." SS_TAP(X_ENTER));
     }
     if (leader_sequence_two_keys(KC_G, KC_C)) {
         // git commit -m "" and move cursor inside quotes
@@ -104,6 +104,6 @@ void leader_end_user(void) {
     }
     if (leader_sequence_two_keys(KC_G, KC_P)) {
         // git push
-        SEND_STRING("git push\n");
+        SEND_STRING("git push" SS_TAP(X_ENTER));
     }
 }
