@@ -156,7 +156,7 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
                 // Gently shift hue between Green (80) and Purple (190)
                 uint8_t hue = 80 + scale8(sin8(time_offset), 110);
                 HSV hsv = { hue, 255, rgb_matrix_config.hsv.v };
-                RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
+                RGB rgb = hsv_to_rgb(hsv);
                 rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
             }
         }
@@ -168,7 +168,7 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
                 uint8_t val = 60 + scale8(sin8(time_offset), 195); 
                 // Subtle metallic blue tint: Hue 130, Saturation 40
                 HSV hsv = { 130, 40, scale8(val, rgb_matrix_config.hsv.v) }; 
-                RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
+                RGB rgb = hsv_to_rgb(hsv);
                 rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
             }
         }
@@ -195,7 +195,7 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
                 }
                 hsv.v = scale8(val, rgb_matrix_config.hsv.v);
                 hsv.s = sat;
-                RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
+                RGB rgb = hsv_to_rgb(hsv);
                 rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
             }
         }
@@ -220,7 +220,7 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
                     }
                 }
                 hsv.v = scale8(val, rgb_matrix_config.hsv.v);
-                RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
+                RGB rgb = hsv_to_rgb(hsv);
                 rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
             }
         }
@@ -247,7 +247,7 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
                     }
                 }
                 hsv.v = scale8(val, rgb_matrix_config.hsv.v);
-                RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
+                RGB rgb = hsv_to_rgb(hsv);
                 rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
             }
         }
@@ -296,7 +296,7 @@ void lshift_finished(tap_dance_state_t *state, void *user_data) {
     lshift_tap_state.state = cur_dance(state);
     switch (lshift_tap_state.state) {
         case SINGLE_TAP: 
-            SEND_STRING("[");
+            SEND_STRING("[]" SS_TAP(X_LEFT));
             break;
         case SINGLE_HOLD: 
             register_code(KC_LSFT); 
@@ -326,7 +326,7 @@ void rshift_finished(tap_dance_state_t *state, void *user_data) {
     rshift_tap_state.state = cur_dance(state);
     switch (rshift_tap_state.state) {
         case SINGLE_TAP: 
-            SEND_STRING("{");
+            SEND_STRING("{}" SS_TAP(X_LEFT));
             break;
         case SINGLE_HOLD: 
             register_code(KC_RSFT); 
