@@ -296,7 +296,7 @@ void lshift_finished(tap_dance_state_t *state, void *user_data) {
     lshift_tap_state.state = cur_dance(state);
     switch (lshift_tap_state.state) {
         case SINGLE_TAP: 
-            SEND_STRING("[]" SS_TAP(X_LEFT));
+            SEND_STRING("[");
             break;
         case SINGLE_HOLD: 
             register_code(KC_LSFT); 
@@ -326,7 +326,7 @@ void rshift_finished(tap_dance_state_t *state, void *user_data) {
     rshift_tap_state.state = cur_dance(state);
     switch (rshift_tap_state.state) {
         case SINGLE_TAP: 
-            SEND_STRING("{}" SS_TAP(X_LEFT));
+            SEND_STRING("{");
             break;
         case SINGLE_HOLD: 
             register_code(KC_RSFT); 
