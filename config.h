@@ -35,12 +35,11 @@
 #define I2C1_CLOCK_SPEED 400000 /* 400000 */
 
 #define RGB_TRIGGER_ON_KEYDOWN
-#define RGB_MATRIX_CUSTOM_USER
 #define LEADER_TIMEOUT 1500 // Increased from 350 to 1.5 seconds so you have plenty of time!
 
 // --- RGB TWEAKS ---
-// Typing Heatmap (Makes it fade 4x slower so it stays visible longer)
-#define RGB_MATRIX_TYPING_HEATMAP_DECREASE_DELAY_MS 100
+// Typing Heatmap (Makes it fade slower, tweaked to 35ms for balance)
+#define RGB_MATRIX_TYPING_HEATMAP_DECREASE_DELAY_MS 35
 #define RGB_MATRIX_TYPING_HEATMAP_INCREASE_STEP 32 // Keeps it highly responsive when hitting keys
 
 // Digital Rain (Increases drop density significantly)
@@ -49,12 +48,3 @@
 // --- MACRO FIXES ---
 // Slows down SEND_STRING slightly so the OS doesn't drop characters (fixes missing "commit -m")
 #define TAP_CODE_DELAY 10
-
-// --- HARD DISABLE HATED EFFECTS ---
-// VIA might still show them, but this forces them completely out of the firmware memory
-#undef ENABLE_RGB_MATRIX_CYCLE_OUT_IN
-#undef ENABLE_RGB_MATRIX_CYCLE_OUT_IN_DUAL
-#undef ENABLE_RGB_MATRIX_DUAL_BEACON
-#undef ENABLE_RGB_MATRIX_RAINBOW_BEACON
-#undef ENABLE_RGB_MATRIX_RAINBOW_MOVING_CHEVRON
-#undef ENABLE_RGB_MATRIX_RAINDROPS

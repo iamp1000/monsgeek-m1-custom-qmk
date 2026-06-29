@@ -15,6 +15,7 @@
  */
 
 #include QMK_KEYBOARD_H
+#include "rgb_matrix.h"
 
 enum __layers {
     WIN_B,
@@ -106,4 +107,96 @@ void leader_end_user(void) {
         // git push
         SEND_STRING("git push" SS_TAP(X_ENTER));
     }
+}
+
+// --- CUSTOM RGB OVERRIDES ---
+// We hook into standard QMK effect IDs so that VIA shows them in the menu correctly!
+bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
+    uint8_t effect = rgb_matrix_get_mode();
+    
+    if (effect == RGB_MATRIX_PIXEL_FLOW || 
+        effect == RGB_MATRIX_JELLYBEAN_RAINDROPS || 
+        effect == RGB_MATRIX_SOLID_SPLASH || 
+        effect == RGB_MATRIX_MULTISPLASH) {
+        
+        uint32_t timer = timer_read32();
+        uint8_t speed = rgb_matrix_config.speed;
+        
+        // Clear background for reactive effects to prevent standard animation bleed
+        for (uint8_t i = led_min; i < led_max; i++) {
+            rgb_matrix_set_color(i, 0, 0, 0);
+        }
+
+        if (effect == RGB_MATRIX_PIXEL_FLOW) { 
+            // OVERWRITTEN WITH: Aurora Borealis
+            for (uint8_t i = led_min; i < led_max; i++) {
+                uint8_t time_offset = (timer * speed / 50) + (g_led_config.point[i].x * 2);
+                uint8_t hue = 120 + (time_offset % 80); // Green to Purple
+                HSV hsv = { hue, 255, rgb_matrix_config.hsv.v };
+                RGB rgb = hsv_to_rgb(hsv);
+                rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
+            }
+        }
+        else if (effect == RGB_MATRIX_JELLYBEAN_RAINDROPS) { 
+            // OVERWRITTEN WITH: Liquid Mercury
+            for (uint8_t i = led_min; i < led_max; i++) {
+                uint8_t time_offset = (timer * speed / 60) + (g_led_config.point[i].x) + (g_led_config.point[i].y);
+                uint8_t val = 100 + (sin8(time_offset) * 155 / 255); 
+                HSV hsv = { 0, 0, (val * rgb_matrix_config.hsv.v) / 255 }; 
+                RGB rgb = hsv_to_rgb(hsv);
+                rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
+            }
+        }
+        else if (effect == RGB_MATRIX_SOLID_SPLASH) { 
+            // OVERWRITTEN WITH: Sakura Bloom
+            uint8_t count = g_last_hit_tracker.count;
+            for (uint8_t i = led_min; i < led_max; i++) {
+                HSV hsv = { 220, 255, 0 }; // Pink base
+                uint8_t val = 0;
+                uint8_t sat = 255;
+                for (uint8_t j = 0; j < count; j++) {
+                    int16_t dx = g_led_config.point[i].x - g_last_hit_tracker.x[j];
+                    int16_t dy = g_led_config.point[i].y - g_last_hit_tracker.y[j];
+                    
+                    // fast approx sqrt for dist
+                    uint8_t dist = (abs(dx) + abs(dy)); 
+                    uint16_t tick = scale16by8(g_last_hit_tracker.tick[j], qadd8(speed, 1));
+                    uint16_t time = tick * 2;
+                    
+                    if (time > dist && time < dist + 40) {
+                        uint8_t intensity = 255 - ((time - dist) * 255 / 40);
+                        val = qadd8(val, intensity);
+                        sat = qsub8(sat, intensity / 2); // gets whiter as it gets brighter
+                    }
+                }
+                hsv.v = scale8(val, rgb_matrix_config.hsv.v);
+                hsv.s = sat;
+                RGB rgb = hsv_to_rgb(hsv);
+                rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
+            }
+        }
+        else if (effect == RGB_MATRIX_MULTISPLASH) { 
+            // OVERWRITTEN WITH: Event Horizon
+            uint8_t count = g_last_hit_tracker.count;
+            for (uint8_t i = led_min; i < led_max; i++) {
+                HSV hsv = { 190, 255, 0 }; // Deep purple
+                uint8_t val = 0;
+                for (uint8_t j = 0; j < count; j++) {
+                    int16_t dx = g_led_config.point[i].x - g_last_hit_tracker.x[j];
+                    int16_t dy = g_led_config.point[i].y - g_last_hit_tracker.y[j];
+                    uint8_t dist = (abs(dx) + abs(dy)); 
+                    uint16_t tick = scale16by8(g_last_hit_tracker.tick[j], qadd8(speed, 1));
+                    uint16_t time = tick * 3; // fast explosion
+                    if (time > dist && time < dist + 20) {
+                        uint8_t intensity = 255 - ((time - dist) * 255 / 20);
+                        val = qadd8(val, intensity);
+                    }
+                }
+                hsv.v = scale8(val, rgb_matrix_config.hsv.v);
+                RGB rgb = hsv_to_rgb(hsv);
+                rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
+            }
+        }
+    }
+    return false; // let default indicators run over top of our effects
 }
