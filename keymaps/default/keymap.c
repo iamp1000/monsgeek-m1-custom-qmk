@@ -37,8 +37,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_GRV,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_MINS,KC_EQL,   KC_BSPC,          KC_HOME,
         KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC,KC_RBRC,  KC_BSLS,          KC_PGUP,
         KC_CAPS, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,KC_NUHS,  KC_ENT,           KC_PGDN,
-        KC_LSFT, KC_NUBS, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH,          KC_RSFT, KC_UP,   KC_END,
-        KC_LCTL, KC_LGUI, KC_LALT,                   KC_SPC,                             QK_LEAD, MO(WIN_FN),KC_RCTL,        KC_LEFT, KC_DOWN, KC_RGHT),
+        TD(0),   KC_NUBS, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH,          TD(1),   KC_UP,   KC_END,
+        KC_LCTL, KC_LGUI, KC_LALT,                   MT(MOD_LCTL, KC_SPC),               QK_LEAD, MO(WIN_FN),KC_RCTL,        KC_LEFT, KC_DOWN, KC_RGHT),
 
     [WIN_W] = LAYOUT_all( /* Base */
         _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,          _______,
@@ -61,8 +61,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_GRV,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_MINS,KC_EQL,   KC_BSPC,          KC_HOME,
         KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC,KC_RBRC,  KC_BSLS,          KC_PGUP,
         KC_CAPS, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,KC_NUHS,  KC_ENT,           KC_PGDN,
-        KC_LSFT, KC_NUBS, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH,          KC_RSFT, KC_UP,   KC_END,
-        KC_LCTL, KC_LALT, KC_LGUI,                   KC_SPC,                             QK_LEAD, MO(MAC_FN),KC_RCTL,        KC_LEFT, KC_DOWN, KC_RGHT),
+        TD(0),   KC_NUBS, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH,          TD(1),   KC_UP,   KC_END,
+        KC_LCTL, KC_LALT, KC_LGUI,                   MT(MOD_LCTL, KC_SPC),               QK_LEAD, MO(MAC_FN),KC_RCTL,        KC_LEFT, KC_DOWN, KC_RGHT),
 
     [MAC_W] = LAYOUT_all( /* WASD/↑←↓→ */
         _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,          _______,
@@ -232,3 +232,102 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
     }
     return false; // let default indicators run over top of our effects
 }
+
+// --- TAP DANCE LOGIC ---
+
+typedef struct {
+    bool is_press_action;
+    uint8_t state;
+} tap;
+
+enum {
+    SINGLE_TAP = 1,
+    SINGLE_HOLD,
+    DOUBLE_TAP,
+    DOUBLE_HOLD,
+    DOUBLE_SINGLE_TAP,
+    MORE_TAPS
+};
+
+uint8_t cur_dance(qk_tap_dance_state_t *state) {
+    if (state->count == 1) {
+        if (state->interrupted || !state->pressed) return SINGLE_TAP;
+        else return SINGLE_HOLD;
+    } else if (state->count == 2) {
+        if (state->interrupted) return DOUBLE_SINGLE_TAP;
+        else if (state->pressed) return DOUBLE_HOLD;
+        else return DOUBLE_TAP;
+    }
+    if (state->count == 3) {
+        if (state->interrupted || !state->pressed) return MORE_TAPS;
+        else return MORE_TAPS;
+    }
+    return MORE_TAPS;
+}
+
+static tap lshift_tap_state = {
+    .is_press_action = true,
+    .state = 0
+};
+
+void lshift_finished(qk_tap_dance_state_t *state, void *user_data) {
+    lshift_tap_state.state = cur_dance(state);
+    switch (lshift_tap_state.state) {
+        case SINGLE_TAP: 
+            register_code(KC_LBRC); 
+            unregister_code(KC_LBRC); 
+            break;
+        case SINGLE_HOLD: 
+            register_code(KC_LSFT); 
+            break;
+        case DOUBLE_TAP: 
+            SEND_STRING("[]" SS_TAP(X_LEFT));
+            break;
+        case DOUBLE_HOLD: 
+            register_code(KC_LSFT); 
+            break;
+    }
+}
+
+void lshift_reset(qk_tap_dance_state_t *state, void *user_data) {
+    if (lshift_tap_state.state == SINGLE_HOLD || lshift_tap_state.state == DOUBLE_HOLD) {
+        unregister_code(KC_LSFT);
+    }
+    lshift_tap_state.state = 0;
+}
+
+static tap rshift_tap_state = {
+    .is_press_action = true,
+    .state = 0
+};
+
+void rshift_finished(qk_tap_dance_state_t *state, void *user_data) {
+    rshift_tap_state.state = cur_dance(state);
+    switch (rshift_tap_state.state) {
+        case SINGLE_TAP: 
+            register_code16(KC_LCBR); // {
+            unregister_code16(KC_LCBR); 
+            break;
+        case SINGLE_HOLD: 
+            register_code(KC_RSFT); 
+            break;
+        case DOUBLE_TAP: 
+            SEND_STRING("{}" SS_TAP(X_LEFT));
+            break;
+        case DOUBLE_HOLD: 
+            register_code(KC_RSFT); 
+            break;
+    }
+}
+
+void rshift_reset(qk_tap_dance_state_t *state, void *user_data) {
+    if (rshift_tap_state.state == SINGLE_HOLD || rshift_tap_state.state == DOUBLE_HOLD) {
+        unregister_code(KC_RSFT);
+    }
+    rshift_tap_state.state = 0;
+}
+
+qk_tap_dance_action_t tap_dance_actions[] = {
+    [0] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, lshift_finished, lshift_reset),
+    [1] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, rshift_finished, rshift_reset)
+};
