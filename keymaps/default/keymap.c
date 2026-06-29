@@ -117,7 +117,8 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
     if (effect == RGB_MATRIX_PIXEL_FLOW || 
         effect == RGB_MATRIX_JELLYBEAN_RAINDROPS || 
         effect == RGB_MATRIX_SOLID_SPLASH || 
-        effect == RGB_MATRIX_MULTISPLASH) {
+        effect == RGB_MATRIX_MULTISPLASH ||
+        effect == RGB_MATRIX_SOLID_REACTIVE_WIDE) {
         
         uint32_t timer = timer_read32();
         uint8_t speed = rgb_matrix_config.speed;
@@ -190,6 +191,37 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
                     if (time > dist && time < dist + 20) {
                         uint8_t intensity = 255 - ((time - dist) * 255 / 20);
                         val = qadd8(val, intensity);
+                    }
+                }
+                hsv.v = scale8(val, rgb_matrix_config.hsv.v);
+                RGB rgb = hsv_to_rgb(hsv);
+                rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
+            }
+        }
+        else if (effect == RGB_MATRIX_SOLID_REACTIVE_WIDE) {
+            // OVERWRITTEN WITH: Reactive Matrix Drop
+            uint8_t count = g_last_hit_tracker.count;
+            for (uint8_t i = led_min; i < led_max; i++) {
+                // Uses the global hue/sat selected by the user in VIA, but starts black
+                HSV hsv = { rgb_matrix_config.hsv.h, rgb_matrix_config.hsv.s, 0 }; 
+                uint8_t val = 0;
+                for (uint8_t j = 0; j < count; j++) {
+                    int16_t dx = g_led_config.point[i].x - g_last_hit_tracker.x[j];
+                    int16_t dy = g_led_config.point[i].y - g_last_hit_tracker.y[j];
+                    
+                    // Check if key is in the exact same column (allow 12 units for staggering)
+                    if (abs(dx) <= 12) {
+                        // Check if key is AT or BELOW the pressed key (y goes 0 to 224 downwards)
+                        if (dy >= -4) {
+                            uint16_t tick = scale16by8(g_last_hit_tracker.tick[j], qadd8(speed, 1));
+                            uint16_t time = tick * 3; // drop speed
+                            
+                            // dy represents distance down the column
+                            if (time > dy && time < dy + 40) {
+                                uint8_t intensity = 255 - ((time - dy) * 255 / 40);
+                                val = qadd8(val, intensity);
+                            }
+                        }
                     }
                 }
                 hsv.v = scale8(val, rgb_matrix_config.hsv.v);

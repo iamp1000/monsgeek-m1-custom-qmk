@@ -61,6 +61,7 @@
             "jellybean_raindrops": true,
             "solid_splash": true,
             "multisplash": true,
+            "solid_reactive_wide": true,
             "solid_color": true,
             "breathing": true
         },
