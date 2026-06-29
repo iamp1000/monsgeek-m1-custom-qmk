@@ -152,20 +152,23 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
         if (effect == RGB_MATRIX_PIXEL_FLOW) { 
             // OVERWRITTEN WITH: Aurora Borealis
             for (uint8_t i = led_min; i < led_max; i++) {
-                uint8_t time_offset = (timer * speed / 50) + (g_led_config.point[i].x * 2);
-                uint8_t hue = 120 + (time_offset % 80); // Green to Purple
+                uint8_t time_offset = (timer / 20) - g_led_config.point[i].x;
+                // Gently shift hue between Green (80) and Purple (190)
+                uint8_t hue = 80 + scale8(sin8(time_offset), 110);
                 HSV hsv = { hue, 255, rgb_matrix_config.hsv.v };
-                RGB rgb = hsv_to_rgb(hsv);
+                RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
                 rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
             }
         }
         else if (effect == RGB_MATRIX_JELLYBEAN_RAINDROPS) { 
             // OVERWRITTEN WITH: Liquid Mercury
             for (uint8_t i = led_min; i < led_max; i++) {
-                uint8_t time_offset = (timer * speed / 60) + (g_led_config.point[i].x) + (g_led_config.point[i].y);
-                uint8_t val = 100 + (sin8(time_offset) * 155 / 255); 
-                HSV hsv = { 0, 0, (val * rgb_matrix_config.hsv.v) / 255 }; 
-                RGB rgb = hsv_to_rgb(hsv);
+                // Slower undulation
+                uint8_t time_offset = (timer / 30) + (g_led_config.point[i].x / 2) + (g_led_config.point[i].y / 2);
+                uint8_t val = 60 + scale8(sin8(time_offset), 195); 
+                // Subtle metallic blue tint: Hue 130, Saturation 40
+                HSV hsv = { 130, 40, scale8(val, rgb_matrix_config.hsv.v) }; 
+                RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
                 rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
             }
         }
@@ -180,20 +183,19 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
                     int16_t dx = g_led_config.point[i].x - g_last_hit_tracker.x[j];
                     int16_t dy = g_led_config.point[i].y - g_last_hit_tracker.y[j];
                     
-                    // fast approx sqrt for dist
-                    uint8_t dist = (abs(dx) + abs(dy)); 
+                    uint8_t dist = sqrt16(dx * dx + dy * dy); 
                     uint16_t tick = scale16by8(g_last_hit_tracker.tick[j], qadd8(speed, 1));
-                    uint16_t time = tick * 2;
+                    uint16_t effect_time = tick - dist;
                     
-                    if (time > dist && time < dist + 40) {
-                        uint8_t intensity = 255 - ((time - dist) * 255 / 40);
+                    if (effect_time < 255 && tick >= dist) {
+                        uint8_t intensity = 255 - effect_time;
                         val = qadd8(val, intensity);
                         sat = qsub8(sat, intensity / 2); // gets whiter as it gets brighter
                     }
                 }
                 hsv.v = scale8(val, rgb_matrix_config.hsv.v);
                 hsv.s = sat;
-                RGB rgb = hsv_to_rgb(hsv);
+                RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
                 rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
             }
         }
@@ -206,16 +208,19 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
                 for (uint8_t j = 0; j < count; j++) {
                     int16_t dx = g_led_config.point[i].x - g_last_hit_tracker.x[j];
                     int16_t dy = g_led_config.point[i].y - g_last_hit_tracker.y[j];
-                    uint8_t dist = (abs(dx) + abs(dy)); 
+                    uint8_t dist = sqrt16(dx * dx + dy * dy); 
+                    
                     uint16_t tick = scale16by8(g_last_hit_tracker.tick[j], qadd8(speed, 1));
-                    uint16_t time = tick * 3; // fast explosion
-                    if (time > dist && time < dist + 20) {
-                        uint8_t intensity = 255 - ((time - dist) * 255 / 20);
+                    uint16_t time = tick * 2; // explosion speed multiplier
+                    uint16_t effect_time = time - dist;
+                    
+                    if (effect_time < 255 && time >= dist) {
+                        uint8_t intensity = 255 - effect_time;
                         val = qadd8(val, intensity);
                     }
                 }
                 hsv.v = scale8(val, rgb_matrix_config.hsv.v);
-                RGB rgb = hsv_to_rgb(hsv);
+                RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
                 rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
             }
         }
@@ -223,30 +228,26 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
             // OVERWRITTEN WITH: Reactive Matrix Drop
             uint8_t count = g_last_hit_tracker.count;
             for (uint8_t i = led_min; i < led_max; i++) {
-                // Uses the global hue/sat selected by the user in VIA, but starts black
                 HSV hsv = { rgb_matrix_config.hsv.h, rgb_matrix_config.hsv.s, 0 }; 
                 uint8_t val = 0;
                 for (uint8_t j = 0; j < count; j++) {
                     int16_t dx = g_led_config.point[i].x - g_last_hit_tracker.x[j];
                     int16_t dy = g_led_config.point[i].y - g_last_hit_tracker.y[j];
                     
-                    // Check if key is in the exact same column (allow 12 units for staggering)
-                    if (abs(dx) <= 12) {
-                        // Check if key is AT or BELOW the pressed key (y goes 0 to 224 downwards)
-                        if (dy >= -4) {
-                            uint16_t tick = scale16by8(g_last_hit_tracker.tick[j], qadd8(speed, 1));
-                            uint16_t time = tick * 3; // drop speed
-                            
-                            // dy represents distance down the column
-                            if (time > dy && time < dy + 40) {
-                                uint8_t intensity = 255 - ((time - dy) * 255 / 40);
-                                val = qadd8(val, intensity);
-                            }
+                    // Allow small horizontal bleed (stagger tolerance), and only flow downwards
+                    if (abs(dx) <= 12 && dy >= -4) {
+                        uint16_t tick = scale16by8(g_last_hit_tracker.tick[j], qadd8(speed, 1));
+                        uint16_t time = tick * 2; // drop speed
+                        uint16_t effect_time = time - dy;
+                        
+                        if (effect_time < 255 && time >= dy) {
+                            uint8_t intensity = 255 - effect_time;
+                            val = qadd8(val, intensity);
                         }
                     }
                 }
                 hsv.v = scale8(val, rgb_matrix_config.hsv.v);
-                RGB rgb = hsv_to_rgb(hsv);
+                RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
                 rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
             }
         }
