@@ -7,7 +7,7 @@
 [![Monsgeek M1](https://img.shields.io/badge/Monsgeek-M1-purple.svg?style=for-the-badge)](#)
 
 <p align="center">
-  <strong>My personal, highly optimized daily-driver config for the Monsgeek M1.</strong>
+  <strong>My personal daily-driver QMK config for the Monsgeek M1 — custom firmware, RGB effects, and just enough Mr. Robot energy to make a keyboard feel suspicious.</strong>
 </p>
 
 </div>
