@@ -7,7 +7,7 @@
 [![Monsgeek M1](https://img.shields.io/badge/Monsgeek-M1-purple.svg?style=for-the-badge)](#)
 
 <p align="center">
-  <strong>My personal daily-driver QMK config for the Monsgeek M1 — custom firmware, RGB effects, and just enough Mr. Robot energy to make a keyboard feel suspicious.</strong>
+  <strong>My personal daily-driver QMK config for the Monsgeek M1 — custom firmware, RGB effects, and enough low-level control to make the stock configuration feel a little too quiet.</strong>
 </p>
 
 </div>
@@ -16,15 +16,15 @@
 
 ## 🚀 Why This Exists
 
-Let's be real—I own this keyboard, and there's a bug in my brain that physically refuses to let me plug a device in and use the stock firmware like a normal, well-adjusted human being.
+I use this keyboard daily, and the stock firmware left enough room for customization to make a firmware project seem reasonable. This is how a small tweak becomes a new build target.
 
-So instead of simply enjoying my keyboard, I decided to rewrite its soul.
+The result is a custom configuration focused on lighting behavior, key layers, macros, and the development workflow.
 
 This repository contains my custom QMK firmware, complete with custom RGB effects, productivity-focused layers, hardcoded keymaps, macros, and a bunch of tweaks built around my development workflow. The stock firmware just wasn't cutting it.
 
 And since QMK is written in C—and we all know C is the *absolute easiest, most forgiving* language ever created... *(hahahaha... crying in pain)*—I naturally thought, "Yeah, let's modify firmware that runs directly on the hardware."
 
-The entire time I was writing this, I was basically praying to the compiler gods that the next flash wouldn't turn my first keyboard into an expensive paperweight. There's nothing quite like watching a firmware upload and wondering if you're about to brick the only keyboard you own.
+Firmware changes have a different feedback loop from web development: a bad build can make the keyboard inconvenient to recover. Build carefully, keep a known-good recovery path, and flash only after checking the target.
 
 Thankfully... it lived.
 
